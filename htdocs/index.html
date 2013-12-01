@@ -12,9 +12,26 @@
 		<script src='lib/quintus_2d.js'></script>
 		<script src='lib/quintus_touch.js'></script>
 		<script src='lib/quintus_ui.js'></script>
+		<script type='text/javascript' src="lib/jquery-1.8.0.min.js"></script>
+		<script type='text/javascript' src="lib/jquery-ui-1.8.23.custom.min"></script>
 	</head>
 
 	<body style="background-color: black;">
+
+		<style type="text/css">
+			#scoreContainer {
+				float: right;
+				font-family: 'myriad pro';
+				font-size: 25px;
+				text-shadow: 0 0 10px #00c6ff;
+				color: #fff;
+			}
+		</style>
+
+		<div id="scoreContainer" class="scoreContainer">
+			<label id="score"></label>
+		</div>
+
 		<script>
 			var score = 0;
 			var tempoFuscao = 2000;
@@ -71,6 +88,11 @@
 						stage.insert(new Q.VerticalEnemy({x: 300, y: yPneu, rangeY: 70, asset: "pneu.png" }));	
 					}
 				}, tempoPneu);
+
+				setInterval(function() {
+					var seconds = new Date().getSeconds();
+					$("#score").html("Pontos: "+score);
+				}, 10);
 			});
 
 			Q.Sprite.extend("Player", {
