@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE map SYSTEM "http://mapeditor.org/dtd/1.0/map.dtd">
+<map version="1.0" orientation="orthogonal" width="40" height="10" tilewidth="70" tileheight="70">
+ <tileset firstgid="1" name="tiles_map" tilewidth="70" tileheight="70">
+  <image source="../zenvaplatformer/zenvaplatformer1_basic/images/tiles_map.png" width="700" height="140"/>
+ </tileset>
+ <layer name="my background layer" width="40" height="10">
+  <data encoding="base64" compression="zlib">
+   eJzjZGBg4BzFo3gUj+JRPIpJxAAW9A4R
+  </data>
+ </layer>
+ <layer name="colision" width="40" height="10">
+  <data encoding="base64" compression="zlib">
+   eJztkoEKgCAMRIe66f9/cYySrjG1MISgB4c3NDrniL5BdnyBtUCt8IpQgNCeKx9eCWZFmM6MK7KK43v5EDZC6p1tnaH2zilp8N8ZZnuqWWNjLzX8XVq9xP0edcYiXftt38mTUhzZXPYbds7YrDj/YjzO34jg6A1koD/f83wbbw4CbA==
+  </data>
+ </layer>
+</map>
