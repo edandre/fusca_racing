@@ -13,7 +13,6 @@
 		<script src='lib/quintus_touch.js'></script>
 		<script src='lib/quintus_ui.js'></script>
 		<script type='text/javascript' src="lib/jquery-1.8.0.min.js"></script>
-		<script type='text/javascript' src="lib/jquery-ui-1.8.23.custom.min"></script>
 	</head>
 
 	<body style="background-color: black;">
@@ -30,12 +29,21 @@
 
 		<div id="scoreContainer" class="scoreContainer">
 			<label id="score"></label>
+			<audio autoplay="autoplay" loop="loop">
+				<source src="soundtrack/motor.wav" type="audio/wav" />
+			</audio>
+
+			<audio id="horn">
+				<source src="soundtrack/horn.mp3" type="audio/mp3" />
+			</audio>
 		</div>
 
 		<script>
 			var score = 0;
 			var tempoFuscao = 2000;
 			var tempoPneu = 2000;
+			var newTime = false;
+			var fuscao;
 
 			var Q = Quintus()
 			.include("Sprites, Scenes, Input, 2D, Touch, UI")
@@ -62,10 +70,21 @@
 				stage.insert(new Q.ObjectDestructor({x: 250, y: 800, asset: "objectDestructor.png"}));
 				
 				// fuscoes pretos
-				window.setInterval( function() {
+				fuscao = window.setInterval( function() {
 					var xFuscao = Math.floor(Math.random() * (650 - 390 + 1)) + 390;
-					stage.insert(new Q.VerticalEnemy({x: xFuscao, y: 20, rangeY: 70, asset: "Fuscaopreto.png" }));
+					stage.insert(new Q.FuscaoPreto({x: xFuscao, y: 20, rangeY: 70, asset: "Fuscaopreto.png" }));
 				}, tempoFuscao);
+
+				window.setInterval( function() {
+					if(newTime == true) {
+						clearInterval(fuscao);	
+						newTime = false;
+						fuscao = window.setInterval( function() {
+							var xFuscao = Math.floor(Math.random() * (650 - 390 + 1)) + 390;
+							stage.insert(new Q.FuscaoPreto({x: xFuscao, y: 20, rangeY: 70, asset: "Fuscaopreto.png" }));
+						}, tempoFuscao);
+					}
+				}, 200);
 
 				// pneus da direita
 				window.setInterval( function() {
@@ -74,7 +93,7 @@
 					for(var i = 0; i < numPneus; i++) {
 						yPneu = (160 - ((75*i)));
 
-						stage.insert(new Q.VerticalEnemy({x: 750, y: yPneu, rangeY: 70, asset: "pneu.png" }));	
+						stage.insert(new Q.Pneu({x: 750, y: yPneu, rangeY: 70, asset: "pneu.png" }));	
 					}
 
 				}, Math.floor(Math.random()*2+1)*tempoPneu);
@@ -85,7 +104,7 @@
 
 					for(var i = 0; i < numPneus; i++) {
 						yPneu = (160 - ((75*i)));
-						stage.insert(new Q.VerticalEnemy({x: 300, y: yPneu, rangeY: 70, asset: "pneu.png" }));	
+						stage.insert(new Q.Pneu({x: 300, y: yPneu, rangeY: 70, asset: "pneu.png" }));	
 					}
 				}, tempoPneu);
 
@@ -99,6 +118,11 @@
 				init:function(p) {
 					this._super(p, {asset: "Fuscaoazul.png", x: 500, y: 550, jumpSpeed: 0, gravity: 0, vx: -250});
 					this.add('2d, platformerControls');
+				},
+				step: function(dt) {
+					if(Q.inputs['fire']) {
+						$("#horn").play();
+					}
 				}
 			});
 
@@ -108,7 +132,7 @@
 				window.location = "";
 			});
 
-			Q.Sprite.extend("VerticalEnemy", {
+			Q.Sprite.extend("Pneu", {
 				init: function(p) {
 					this._super(p, {vy: 200, rangeY: 200, gravity: 0 });
 					this.add("2d");
@@ -125,18 +149,39 @@
 				}*/
 			});
 
+			Q.Sprite.extend("FuscaoPreto", {
+				init: function(p) {
+					this._super(p, {vy: 200, rangeY: 200, gravity: 0 });
+					this.add("2d");
+					this.p.initialY = this.p.y;				
+					this.on("bump.left,bump.right,bump.bottom,bump.top",function(collision) {
+						if(collision.obj.isA("Player")) { 
+					      	collision.obj.destroy();
+							Q.stageScene("endGame",1, { label: "Game Over" }); 	
+						}
+					});
+			     },
+			    /*step: function(dt) {           
+
+				} */
+			});
+
 			Q.Sprite.extend("ObjectDestructor", {
 				init: function(p) {
 					this._super(p, {gravity: 0});
 					this.add("2d");
 					this.on("bump.top", function(collision){
-						if(collision.obj.isA("VerticalEnemy")) {
-							collision.obj.destroy();
+						if(collision.obj.isA("FuscaoPreto")) {
 							score = score + 100;
+							collision.obj.destroy();
 							if(tempoFuscao >= 950) {
-								tempoFuscao = tempoFuscao - 10;
-								console.log(score);
+								tempoFuscao = tempoFuscao - 5;
+								newTime = true;
 							}
+						}
+						if(collision.obj.isA("Pneu")) {
+							collision.obj.destroy();
+							score = score + 50;
 						}
 					});
 				}
