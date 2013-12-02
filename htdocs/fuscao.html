@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+		<title>Fusca Racing</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<script src='lib/quintus.js'></script>
+		<script src='lib/quintus_sprites.js'></script>
+		<script src='lib/quintus_scenes.js'></script>
+		<script src='lib/quintus_input.js'></script>
+		<script src='lib/quintus_anim.js'></script>
+		<script src='lib/quintus_2d.js'></script>
+		<script src='lib/quintus_touch.js'></script>
+		<script src='lib/quintus_ui.js'></script>
+		<script type='text/javascript' src="lib/jquery-1.8.0.min.js"></script>
+	</head>
+
+	<body style="background-color: black;">
+
+		<style type="text/css">
+			#scoreContainer {
+				float: right;
+				font-family: 'myriad pro';
+				font-size: 25px;
+				text-shadow: 0 0 10px #00c6ff;
+				color: #fff;
+			}
+		</style>
+
+		<div id="scoreContainer" class="scoreContainer">
+			<label id="score"></label>
+			<audio autoplay="autoplay" loop="loop">
+				<source src="soundtrack/motor.wav" type="audio/wav" />
+			</audio>
+
+			<audio id="horn">
+				<source src="soundtrack/horn.mp3" type="audio/mp3" />
+			</audio>
+		</div>
+
+		<script>
+			var score = 0;
+			var tempoFuscao = 2000;
+			var tempoPneu = 2000;
+			var newTime = false;
+			var fuscao;
+
+			var Q = Quintus()
+			.include("Sprites, Scenes, Input, 2D, Touch, UI")
+			.setup({
+				width: 960,
+				height: 640
+			}).controls().touch();
+
+			Q.load("tilesheet.png, Fuscaoazul.png, Fuscaopreto.png, pista2.tmx, pneu.png, objectDestructor.png", function() {
+					Q.sheet("tiles","tilesheet.png", {tilew: 70, tileh: 70});
+					Q.stageScene("pista2");
+			});
+
+			Q.scene("pista2", function(stage){
+				var background = new Q.TileLayer({ dataAsset: 'pista2.tmx', layerIndex: 1, sheet: 'tiles', tileW: 70, tileH: 70, type: Q.SPRITE_NONE});
+				stage.insert(background);
+
+				var player = stage.insert(new Q.Player());
+
+				stage.collisionLayer(new Q.TileLayer({ dataAsset: 'pista2.tmx', layerIndex: 0, sheet: 'tiles', tileW: 70, tileH: 70 }));
+
+				stage.add("viewport").follow(player, {x: true, y: true}, { minX: 0, maxX: background.p.w, minY: 0, maxY: 0, maxY: background.p.h});
+
+				stage.insert(new Q.ObjectDestructor({x: 250, y: 800, asset: "objectDestructor.png"}));
+				
+				// fuscoes pretos
+				fuscao = window.setInterval( function() {
+					var xFuscao = Math.floor(Math.random() * (650 - 390 + 1)) + 390;
+					stage.insert(new Q.FuscaoPreto({x: xFuscao, y: 20, rangeY: 70, asset: "Fuscaopreto.png" }));
+				}, tempoFuscao);
+
+				window.setInterval( function() {
+					if(newTime == true) {
+						clearInterval(fuscao);	
+						newTime = false;
+						fuscao = window.setInterval( function() {
+							var xFuscao = Math.floor(Math.random() * (650 - 390 + 1)) + 390;
+							stage.insert(new Q.FuscaoPreto({x: xFuscao, y: 20, rangeY: 70, asset: "Fuscaopreto.png" }));
+						}, tempoFuscao);
+					}
+				}, 200);
+
+				// pneus da direita
+				window.setInterval( function() {
+					var numPneus = Math.floor(Math.random() * 3 + 1);
+
+					for(var i = 0; i < numPneus; i++) {
+						yPneu = (160 - ((75*i)));
+
+						stage.insert(new Q.Pneu({x: 750, y: yPneu, rangeY: 70, asset: "pneu.png" }));	
+					}
+
+				}, Math.floor(Math.random()*2+1)*tempoPneu);
+
+				// pneus da esquerda
+				window.setInterval( function() {
+					var numPneus = Math.floor(Math.random() * 3 + 1);
+
+					for(var i = 0; i < numPneus; i++) {
+						yPneu = (160 - ((75*i)));
+						stage.insert(new Q.Pneu({x: 300, y: yPneu, rangeY: 70, asset: "pneu.png" }));	
+					}
+				}, tempoPneu);
+
+				setInterval(function() {
+					var seconds = new Date().getSeconds();
+					$("#score").html("Pontos: "+score);
+				}, 10);
+			});
+
+			Q.Sprite.extend("Player", {
+				init:function(p) {
+					this._super(p, {asset: "Fuscaoazul.png", x: 500, y: 550, jumpSpeed: 0, gravity: 0, vx: -250});
+					this.add('2d, platformerControls');
+				},
+				step: function(dt) {
+					if(Q.inputs['fire']) {
+						$("#horn").play();
+					}
+				}
+			});
+
+			Q.scene("endGame",function(stage) {
+				alert("Game Over :/");
+				//recarrega a scene atual “level1”
+				window.location = "fuscao.html";
+			});
+
+			Q.Sprite.extend("Pneu", {
+				init: function(p) {
+					this._super(p, {vy: 200, rangeY: 200, gravity: 0 });
+					this.add("2d");
+					this.p.initialY = this.p.y;				
+					this.on("bump.left,bump.right,bump.bottom,bump.top",function(collision) {
+						if(collision.obj.isA("Player")) { 
+					      	collision.obj.destroy();
+							Q.stageScene("endGame",1, { label: "Game Over" }); 	
+						}
+					});
+			     },
+			    /*step: function(dt) {           
+					
+				}*/
+			});
+
+			Q.Sprite.extend("FuscaoPreto", {
+				init: function(p) {
+					this._super(p, {vy: 200, rangeY: 200, gravity: 0 });
+					this.add("2d");
+					this.p.initialY = this.p.y;				
+					this.on("bump.left,bump.right,bump.bottom,bump.top",function(collision) {
+						if(collision.obj.isA("Player")) { 
+					      	collision.obj.destroy();
+							Q.stageScene("endGame",1, { label: "Game Over" }); 	
+						}
+					});
+			     },
+			    /*step: function(dt) {           
+
+				} */
+			});
+
+			Q.Sprite.extend("ObjectDestructor", {
+				init: function(p) {
+					this._super(p, {gravity: 0});
+					this.add("2d");
+					this.on("bump.top", function(collision){
+						if(collision.obj.isA("FuscaoPreto")) {
+							score = score + 100;
+							collision.obj.destroy();
+							if(tempoFuscao >= 950) {
+								tempoFuscao = tempoFuscao - 20;
+								newTime = true;
+							}
+						}
+						if(collision.obj.isA("Pneu")) {
+							collision.obj.destroy();
+							score = score + 50;
+						}
+					});
+				}
+			});
+		</script>
+	</body>
+</html>
