@@ -119,11 +119,9 @@
 					this._super(p, {asset: "Fuscaoazul.png", x: 500, y: 550, jumpSpeed: 0, gravity: 0, vx: -250});
 					this.add('2d, platformerControls');
 				},
-				step: function(dt) {
-					if(Q.inputs['fire']) {
-						$("#horn").play();
-					}
-				}
+				/*step: function(dt) {
+					
+				}*/
 			});
 
 			Q.scene("endGame",function(stage) {
